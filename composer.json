@@ -23,7 +23,7 @@
     },
     "autoload": {
         "psr-0": {
-            "doctrine-db-patcher\\": "library/"
+            "DoctrineDbPatcher\\": "library/"
         }
     }
 }
