@@ -1,6 +1,12 @@
 {
     "name": "cyberrebell/doctrine-db-patcher",
     "description": "Doctrine-DB-Patcher",
+    "authors": [
+        {
+            "name": "Cyberrebell",
+            "email": "chainsaw75@web.de"
+        }
+    ],
     "type": "library",
     "keywords": [
         "doctrine",
@@ -10,30 +16,10 @@
     ],
     "homepage": "https://github.com/Cyberrebell/doctrine-db-patcher",
     "license": "GPL-2.0",
-    "repositories": [
-        {
-            "type": "package",
-            "package": {
-                "name": "sebastianbergmann/phpcov",
-                "version": "1.1.0",
-                "dist": {
-                    "url": "https://github.com/sebastianbergmann/phpcov/archive/1.1.0.zip",
-                    "type": "zip"
-                },
-                "source": {
-                    "url": "https://github.com/sebastianbergmann/phpcov.git",
-                    "type": "git",
-                    "reference": "1.1.0"
-                },
-                "bin": [
-                    "phpcov.php"
-                ]
-            }
-        }
-    ],
     "require": {
         "php": ">=5.4.4",
-        "zendframework/zendframework": ">=2.3.0"
+        "zendframework/zendframework": ">=2.3.0",
+        "doctrine/mongodb-odm" : "1.0.*@dev"
     },
     "autoload": {
         "psr-0": {
