@@ -1,5 +1,5 @@
 <?php
-namespace DoctrineDbPatcher;
+namespace DoctrineDbPatcher\Model;
 
 class PatchModel
 {
