@@ -1,5 +1,5 @@
 <?php
-namespace DoctrineDbPatcher\Console;
+namespace DoctrineDbPatcher;
 
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\Console\Request;

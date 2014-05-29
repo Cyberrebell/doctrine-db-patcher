@@ -7,7 +7,7 @@ return [
                     'options' => [
                         'route'    => 'dbpatch',
                         'defaults' => [
-                            'controller' => 'DoctrineDbPatcher\Console\Controller\DoctrineDbPatch',
+                            'controller' => 'DoctrineDbPatcher\Controller\DoctrineDbPatch',
                             'action'     => 'dbpatch'
                         ]
                     ]
@@ -17,7 +17,7 @@ return [
     ],
     'controllers'     => [
         'invokables' => [
-            'DoctrineDbPatcher\Console\Controller\DoctrineDbPatch' => 'DoctrineDbPatcher\Console\Controller\DoctrineDbPatchController'
+            'DoctrineDbPatcher\Controller\DoctrineDbPatch' => 'DoctrineDbPatcher\Controller\DoctrineDbPatchController'
         ],
     ]
 ];

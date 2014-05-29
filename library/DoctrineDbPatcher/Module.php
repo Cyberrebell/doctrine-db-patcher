@@ -1,5 +1,5 @@
 <?php
-namespace DoctrineDbPatcher\Console;
+namespace DoctrineDbPatcher;
 
 use Zend\Config\Config;
 use Zend\Mvc\MvcEvent;
@@ -33,9 +33,9 @@ class Module
 
     public function getConsoleUsage(AdapterInterface $console){
         return [
-            'cmd db-init [Options]' => 'Pushes required data into DB',
+            'dbpatch [Options]' => 'patches the database',
 
-            ['--noclear', 'do not clear DB first']
+            ['--help', 'display options']
         ];
     }
 }
