@@ -8,6 +8,7 @@ class PatchModel
     protected $om;
     protected $patches;
     protected $version;
+    protected $dbVersion;
     
     /**
      * Construct and check config
@@ -59,16 +60,64 @@ class PatchModel
         return $patchedSomething;
     }
     
+    /**
+     * Applies a specific patch to DB
+     * @param array $patchData
+     * @return boolean
+     */
     protected function applyPatch(array $patchData) {
         $success = true;
         
-        //do the patch
+        if (array_key_exists('insert', $patchData)) {
+            $this->insert($patchData['insert']);
+        }
         
+        if (array_key_exists('update', $patchData)) {
+            $this->update($patchData['update']);
+        }
+        
+        if (array_key_exists('delete', $patchData)) {
+            $this->delete($patchData['delete']);
+        }
+        
+        if (array_key_exists('connect', $patchData)) {
+            $this->connect($patchData['connect']);
+        }
+        
+        if ($success) {
+            $this->om->flush();
+        }
         return $success;
     }
     
+    /**
+     * Resolve the insert-config and insert its contents
+     * @param array $config
+     * @throws \Exception
+     */
     protected function insert(array $config) {
-        
+        foreach ($config as $entityNamespace => $setting) {
+            if (!array_key_exists('attributes', $setting)) {
+                throw new \Exception('no attributes set for Entity "' . $entityNamespace . '"');
+            } else if (!array_key_exists('values', $setting)) {
+                throw new \Exception('no values set for Entity "' . $entityNamespace . '"');
+            }
+            foreach ($setting['values'] as $values) {
+                if (count($values) != count($setting['attributes'])) {
+                    throw new \Exception('values param count doesnt match attributes param count at "' . $entityNamespace . '"');
+                }
+                $entity = new $entityNamespace();
+                foreach ($setting['attributes'] as $key => $attribute) {
+                    $func = 'set' . ucfirst($attribute);
+                    if (!method_exists($entity, $func)) {
+                        throw new \Exception('method "' . $func . '" is not defined on "' . $entityNamespace
+                            . '". Do you not use common setter functions? Use Doctrine to generate your entities!');
+                    }
+                    $entity->$func($values[$key]);
+                }
+                $this->om->persist($entity);
+            }
+        }
     }
     
     protected function update(array $config) {
@@ -90,13 +139,13 @@ class PatchModel
      */
     protected function checkVersion() {
         $versionRepo = $this->om->getRepository('DoctrineDbPatcher\Entity\DbVersion');
-        $dbVersion = $versionRepo->findOneBy([]);
-        if ($dbVersion === NULL) {
-            $dbVersion = new DbVersion();
-            $dbVersion->setVersion('0.0.0');
-            $this->om->persist($dbVersion);
+        $this->dbVersion = $versionRepo->findOneBy([]);
+        if ($this->dbVersion === NULL) {
+            $this->dbVersion = new DbVersion();
+            $this->dbVersion->setVersion('0.0.0');
+//             $this->om->persist($this->dbVersion);
         }
-        return explode('.', $dbVersion->getVersion());
+        return explode('.', $this->dbVersion->getVersion());
     }
     
     /**
