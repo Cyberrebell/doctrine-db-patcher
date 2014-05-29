@@ -1,5 +1,5 @@
 <?php
-namespace DoctrineDbPatcher;
+namespace DoctrineDbPatcher\Controller;
 
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\Console\Request;
@@ -15,8 +15,8 @@ class DoctrineDbPatchController extends AbstractActionController
         $params = $request->getParams();
         $patchModel = new PatchModel();
         
-        if (isset($params['v'])) {
-            echo $patchModel->getVersion();
+        if ($params->get('v')) {
+            echo 'Version: ' . $patchModel->getVersion() . "\n";
         }
         
     	echo "Datenbank wurde gepatched!\n";
