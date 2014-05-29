@@ -13,7 +13,11 @@ class DoctrineDbPatchController extends AbstractActionController
             throw new \RuntimeException('You can only use this action from a console!');
         }
         $params = $request->getParams();
+        $patchModel = new PatchModel();
         
+        if (isset($params['v'])) {
+            echo $patchModel->getVersion();
+        }
         
     	echo "Datenbank wurde gepatched!\n";
     }

@@ -5,7 +5,7 @@ return [
             'routes' => [
                 'doctrinedbpatcher' => [
                     'options' => [
-                        'route'    => 'dbpatch',
+                        'route'    => 'dbpatch [-v]',
                         'defaults' => [
                             'controller' => 'DoctrineDbPatcher\Controller\DoctrineDbPatch',
                             'action'     => 'dbpatch'

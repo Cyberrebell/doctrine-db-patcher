@@ -24,13 +24,6 @@ class Module
         ];
     }
 
-    public function onBootstrap(MvcEvent $e)
-    {
-        $application   = $e->getApplication();
-        $sm            = $application->getServiceManager();
-        $sharedManager = $application->getEventManager()->getSharedManager();
-    }
-
     public function getConsoleUsage(AdapterInterface $console){
         return [
             'dbpatch [Options]' => 'patches the database',
