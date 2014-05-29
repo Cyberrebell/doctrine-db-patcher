@@ -165,13 +165,19 @@ class PatchModel
         }
     }
     
+    /**
+     * Resolve the delete-config and delete as stated
+     * Warning: Never delete entries you inserted in the same patch. It won't work!
+     * @param array $config
+     * @throws \Exception
+     */
     protected function delete(array $config) {
         foreach ($config as $entityNamespace => $settings) {
             foreach ($settings as $setting) {
                 if (!array_key_exists('attributes', $setting)) {
-                    throw new \Exception('[delete]: no attributes set for update Entity "' . $entityNamespace . '"');
+                    throw new \Exception('[delete]: no attributes set for delete Entity "' . $entityNamespace . '"');
                 } else if (!array_key_exists('values', $setting)) {
-                    throw new \Exception('[delete]: no values set for update Entity "' . $entityNamespace . '"');
+                    throw new \Exception('[delete]: no values set for delete Entity "' . $entityNamespace . '"');
                 }
         
                 foreach ($setting['values'] as $values) {
@@ -185,7 +191,7 @@ class PatchModel
                     }
                     $entities = $this->om->getRepository($entityNamespace)->findBy($searchParam);
                     if (count($entities) < 1) {
-                        throw new \Exception('[delete]: entry to update not found in DB for "' . $entityNamespace . '". Probably the patch is broken!');
+                        throw new \Exception('[delete]: entry to delete not found in DB for "' . $entityNamespace . '". Probably the patch is broken!');
                     }
                     foreach ($entities as $entity) {
                         $this->om->remove($entity);
@@ -196,7 +202,66 @@ class PatchModel
     }
     
     protected function connect(array $config) {
-        
+        foreach ($config as $relation) {
+            if (!array_key_exists('entities', $relation)) {
+                throw new \Exception('[connect]: no entities set for connect!');
+            }
+            $sourceEntity = reset(array_keys($relation['entities']));
+            $targetEntity = reset($relation['entities']);
+            if (!array_key_exists('methods', $relation)) {
+                throw new \Exception('[connect]: no methods set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
+            }
+            $addMethod = reset(array_keys($relation['methods']));
+            if (!array_key_exists('targets', $relation)) {
+                throw new \Exception('[connect]: no targets set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
+            }
+            foreach ($relation['targets'] as $target) {
+                if (!array_key_exists('source', $target)) {
+                    throw new \Exception('[connect]: no source set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
+                }
+                if (!array_key_exists('target', $target)) {
+                    throw new \Exception('[connect]: no target set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
+                }
+                $entitiesToUpdate = $this->findPersistedEntityBy($sourceEntity, $target['source']);
+                $dbEntities = $this->om->getRepository($sourceEntity)->findBy($target['source']);
+                $entitiesToUpdate = array_merge($entitiesToUpdate, $dbEntities);
+                foreach ($entitiesToUpdate as $entityToUpdate) {
+                    $entitiesToAdd = $this->findPersistedEntityBy($targetEntity, $target['target']);
+                    $dbEntities = $this->om->getRepository($targetEntity)->findBy($target['target']);
+                    $entitiesToAdd = array_merge($entitiesToAdd, $dbEntities);
+                    foreach ($entitiesToAdd as $entityToAdd) {
+                        $entityToUpdate->$addMethod($entityToAdd);
+                    }
+                    $this->om->persist($entityToUpdate);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Searches in persisted Entites for matching $criteria
+     * ODM Related function usage
+     * @param string $entityNamespace
+     * @param array $criteria
+     */
+    protected function findPersistedEntityBy($entityNamespace, array $criteria) {
+        $results = [];
+        $documents = $this->om->getUnitOfWork()->getScheduledDocumentInsertions();
+        foreach ($documents as $document) {
+            if ($document instanceof $entityNamespace) {
+                $accept = true;
+                foreach ($criteria as $propertie => $searchValue) {
+                    $func = 'get' . ucfirst($propertie);
+                    if ($document->$func() != $searchValue) {
+                        $accept = false;
+                    }
+                }
+                if ($accept) {
+                    $results[] = $document;
+                }
+            }
+        }
+        return $results;
     }
     
     /**
@@ -235,6 +300,14 @@ class PatchModel
         return $result;
     }
     
+    /**
+     * 
+     * @param string $key
+     * @param array $config
+     * @param boolean $required
+     * @throws \Exception
+     * @return array|boolean
+     */
     protected function getConfigValue($key, array $config, $required = true) {
         if (array_key_exists($key, $config)) {
             return $config[$key];

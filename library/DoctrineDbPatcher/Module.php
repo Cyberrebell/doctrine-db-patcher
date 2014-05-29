@@ -28,7 +28,7 @@ class Module
         return [
             'dbpatch [Options]' => 'patches the database',
 
-            ['--help', 'display options']
+            ['-v', 'just get version of database']
         ];
     }
 }
