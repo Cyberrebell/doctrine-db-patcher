@@ -52,7 +52,8 @@ class PatchModel
                             $patchedSomething = true;
                         }
                     }catch (\Exception $e){
-                        throw new \Exception('Patch ' . $patchVersion . ' failed for the following reason: "' . $e->getMessage() . '"');
+                        throw new \Exception('Patch ' . $patchVersion . ' failed for the following reason: "' . $e->getMessage()
+                            . '"! DB would still at version' . $this->getVersion());
                     }
                 }
             }
@@ -165,7 +166,33 @@ class PatchModel
     }
     
     protected function delete(array $config) {
+        foreach ($config as $entityNamespace => $settings) {
+            foreach ($settings as $setting) {
+                if (!array_key_exists('attributes', $setting)) {
+                    throw new \Exception('[delete]: no attributes set for update Entity "' . $entityNamespace . '"');
+                } else if (!array_key_exists('values', $setting)) {
+                    throw new \Exception('[delete]: no values set for update Entity "' . $entityNamespace . '"');
+                }
         
+                foreach ($setting['values'] as $values) {
+                    if (count(reset($values)) != count($setting['attributes'])) {
+                        throw new \Exception('[delete]: values param count doesnt match attributes param count at "' . $entityNamespace . '"');
+                    }
+        
+                    $searchParam = [];
+                    foreach ($values as $key => $value) {
+                        $searchParam[$setting['attributes'][$key]] = $value;
+                    }
+                    $entities = $this->om->getRepository($entityNamespace)->findBy($searchParam);
+                    if (count($entities) < 1) {
+                        throw new \Exception('[delete]: entry to update not found in DB for "' . $entityNamespace . '". Probably the patch is broken!');
+                    }
+                    foreach ($entities as $entity) {
+                        $this->om->remove($entity);
+                    }
+                }
+            }
+        }
     }
     
     protected function connect(array $config) {
