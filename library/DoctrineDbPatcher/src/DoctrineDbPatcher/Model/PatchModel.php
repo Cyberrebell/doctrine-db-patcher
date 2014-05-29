@@ -2,6 +2,7 @@
 namespace DoctrineDbPatcher\Model;
 
 use Zend\ServiceManager\ServiceLocatorInterface;
+use DoctrineDbPatcher\Entity\DbVersion;
 class PatchModel
 {
     protected $om;
@@ -17,30 +18,42 @@ class PatchModel
         $patcherConfig = $this->getConfigValue('DoctrineDbPatcher', $config);
         $this->om = $service->get($this->getConfigValue('doctrine-objectmanager-service', $patcherConfig));
         $this->patches = $this->getConfigValue('patches', $patcherConfig);
+        $this->version = $this->checkVersion();
     }
     
     function getVersion(){
-        return '1.0.0';
+        return implode('.', $this->version);
     }
     
-    function insert(array $config) {
+    function patchToVersion($targetVersion = NULL) {
         
     }
     
-    function update(array $config) {
+    protected function insert(array $config) {
         
     }
     
-    function delete(array $config) {
+    protected function update(array $config) {
         
     }
     
-    function connect(array $config) {
+    protected function delete(array $config) {
+        
+    }
+    
+    protected function connect(array $config) {
         
     }
     
     protected function checkVersion() {
-        
+        $versionRepo = $this->om->getRepository('DoctrineDbPatcher\Entity\DbVersion');
+        $dbVersion = $versionRepo->findOneBy([]);
+        if ($dbVersion === NULL) {
+            $dbVersion = new DbVersion();
+            $dbVersion->setVersion('0.0.0');
+            $this->om->persist($dbVersion);
+        }
+        return explode('.', $dbVersion->getVersion());
     }
     
     protected function getConfigValue($key, array $config, $required = true) {

@@ -21,6 +21,8 @@ class DoctrineDbPatchController extends AbstractActionController
             exit;
         }
         
-    	echo "You patched the database to version xxx!\n";
+        $patchModel->patchToVersion();
+        
+    	echo 'You patched the database to version ' . $patchModel->getVersion() . '!' . "\n";
     }
 }
