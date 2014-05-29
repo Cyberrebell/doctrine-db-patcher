@@ -66,8 +66,6 @@ class PatchModel
      * @return boolean
      */
     protected function applyPatch(array $patchData) {
-        $success = true;
-        
         if (array_key_exists('insert', $patchData)) {
             $this->insert($patchData['insert']);
         }
@@ -84,10 +82,8 @@ class PatchModel
             $this->connect($patchData['connect']);
         }
         
-        if ($success) {
-            $this->om->flush();
-        }
-        return $success;
+        $this->om->flush();
+        return true;
     }
     
     /**
@@ -98,30 +94,74 @@ class PatchModel
     protected function insert(array $config) {
         foreach ($config as $entityNamespace => $setting) {
             if (!array_key_exists('attributes', $setting)) {
-                throw new \Exception('no attributes set for Entity "' . $entityNamespace . '"');
+                throw new \Exception('[insert]: no attributes set for Entity "' . $entityNamespace . '"');
             } else if (!array_key_exists('values', $setting)) {
-                throw new \Exception('no values set for Entity "' . $entityNamespace . '"');
+                throw new \Exception('[insert]: no values set for Entity "' . $entityNamespace . '"');
             }
+            
             foreach ($setting['values'] as $values) {
                 if (count($values) != count($setting['attributes'])) {
-                    throw new \Exception('values param count doesnt match attributes param count at "' . $entityNamespace . '"');
+                    throw new \Exception('[insert]: values param count doesnt match attributes param count at "' . $entityNamespace . '"');
                 }
-                $entity = new $entityNamespace();
+                
+                $entity = new $entityNamespace();   //create new void entity
                 foreach ($setting['attributes'] as $key => $attribute) {
                     $func = 'set' . ucfirst($attribute);
                     if (!method_exists($entity, $func)) {
                         throw new \Exception('method "' . $func . '" is not defined on "' . $entityNamespace
                             . '". Do you not use common setter functions? Use Doctrine to generate your entities!');
                     }
-                    $entity->$func($values[$key]);
+                    $entity->$func($values[$key]);  //use setter for attribute
                 }
                 $this->om->persist($entity);
             }
         }
     }
     
+    /**
+     * Resolve the update-config and update as stated
+     * Warning: Never update entries you inserted in the same patch. It won't work!
+     * @param array $config
+     * @throws \Exception
+     */
     protected function update(array $config) {
-        
+        foreach ($config as $entityNamespace => $settings) {
+            foreach ($settings as $setting) {
+                if (!array_key_exists('attributes', $setting)) {
+                    throw new \Exception('[update]: no attributes set for update Entity "' . $entityNamespace . '"');
+                } else if (!array_key_exists('values', $setting)) {
+                    throw new \Exception('[update]: no values set for update Entity "' . $entityNamespace . '"');
+                }
+            
+                foreach ($setting['values'] as $values) {
+                    if (count(reset(reset($values))) != count($setting['attributes'])) {
+                        throw new \Exception('[update]: values param count doesnt match attributes param count at "' . $entityNamespace . '"');
+                    } else if (!array_key_exists('old', $values) || !array_key_exists('new', $values)) {
+                        throw new \Exception('[update]: values must have "old" and "new" key. Missing at "' . $entityNamespace . '"');
+                    }
+    
+                    $searchParam = [];
+                    foreach ($values['old'] as $key => $value) {
+                        $searchParam[$setting['attributes'][$key]] = $value;
+                    }
+                    $entities = $this->om->getRepository($entityNamespace)->findBy($searchParam);
+                    if (count($entities) < 1) {
+                        throw new \Exception('[update]: entry to update not found in DB for "' . $entityNamespace . '". Probably the patch is broken!');
+                    }
+                    foreach ($entities as $entity) {
+                        foreach ($setting['attributes'] as $key => $attribute) {
+                            $func = 'set' . ucfirst($attribute);
+                            if (!method_exists($entity, $func)) {
+                                throw new \Exception('method "' . $func . '" is not defined on "' . $entityNamespace
+                                        . '". Do you not use common setter functions? Use Doctrine to generate your entities!');
+                            }
+                            $entity->$func($values['new'][$key]);  //use setter for attribute
+                        }
+                        $this->om->persist($entity);
+                    }
+                }
+            }
+        }
     }
     
     protected function delete(array $config) {
