@@ -3,6 +3,7 @@ namespace DoctrineDbPatcher\Controller;
 
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\Console\Request;
+use DoctrineDbPatcher\Model\PatchModel;
 
 class DoctrineDbPatchController extends AbstractActionController
 {
