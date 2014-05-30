@@ -1,2 +1,3 @@
 <?php
-chdir(dirname(__DIR__));
+$loader = include_once __DIR__ . '/../../../autoload.php';
+$loader->add('DoctrineDbPatcher\\', __DIR__ . '/../library/DoctrineDbPatcher/src/');

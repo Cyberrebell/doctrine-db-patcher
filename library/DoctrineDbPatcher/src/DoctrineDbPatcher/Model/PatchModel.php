@@ -52,7 +52,7 @@ class PatchModel
                             $this->version = $patchVersionArray;
                             $patchedSomething = true;
                         }
-                    }catch (\Exception $e){
+                    }catch (\UnexpectedValueException $e){
                         throw new \Exception('Patch ' . $patchVersion . ' failed for the following reason: "' . $e->getMessage()
                             . '"! DB would still at version' . $this->getVersion());
                     }
@@ -96,21 +96,21 @@ class PatchModel
     protected function insert(array $config) {
         foreach ($config as $entityNamespace => $setting) {
             if (!array_key_exists('attributes', $setting)) {
-                throw new \Exception('[insert]: no attributes set for Entity "' . $entityNamespace . '"');
+                throw new \UnexpectedValueException('[insert]: no attributes set for Entity "' . $entityNamespace . '"');
             } else if (!array_key_exists('values', $setting)) {
-                throw new \Exception('[insert]: no values set for Entity "' . $entityNamespace . '"');
+                throw new \UnexpectedValueException('[insert]: no values set for Entity "' . $entityNamespace . '"');
             }
             
             foreach ($setting['values'] as $values) {
                 if (count($values) != count($setting['attributes'])) {
-                    throw new \Exception('[insert]: values param count doesnt match attributes param count at "' . $entityNamespace . '"');
+                    throw new \UnexpectedValueException('[insert]: values param count doesnt match attributes param count at "' . $entityNamespace . '"');
                 }
                 
                 $entity = new $entityNamespace();   //create new void entity
                 foreach ($setting['attributes'] as $key => $attribute) {
                     $func = 'set' . ucfirst($attribute);
                     if (!method_exists($entity, $func)) {
-                        throw new \Exception('method "' . $func . '" is not defined on "' . $entityNamespace
+                        throw new \UnexpectedValueException('method "' . $func . '" is not defined on "' . $entityNamespace
                             . '". Do you not use common setter functions? Use Doctrine to generate your entities!');
                     }
                     $entity->$func($values[$key]);  //use setter for attribute
@@ -124,22 +124,23 @@ class PatchModel
      * Resolve the update-config and update as stated
      * Warning: Never update entries you inserted in the same patch. It won't work!
      * @param array $config
-     * @throws \Exception
+     * @throws \UnexpectedValueException
      */
     protected function update(array $config) {
         foreach ($config as $entityNamespace => $settings) {
             foreach ($settings as $setting) {
                 if (!array_key_exists('attributes', $setting)) {
-                    throw new \Exception('[update]: no attributes set for update Entity "' . $entityNamespace . '"');
+                    throw new \UnexpectedValueException('[update]: no attributes set for update Entity "' . $entityNamespace . '"');
                 } else if (!array_key_exists('values', $setting)) {
-                    throw new \Exception('[update]: no values set for update Entity "' . $entityNamespace . '"');
+                    throw new \UnexpectedValueException('[update]: no values set for update Entity "' . $entityNamespace . '"');
                 }
             
                 foreach ($setting['values'] as $values) {
-                    if (count(reset(reset($values))) != count($setting['attributes'])) {
-                        throw new \Exception('[update]: values param count doesnt match attributes param count at "' . $entityNamespace . '"');
+                    $firstValues = reset($values);  //strict mode intermediate-step
+                    if (count(reset($firstValues)) != count($setting['attributes'])) {
+                        throw new \UnexpectedValueException('[update]: values param count doesnt match attributes param count at "' . $entityNamespace . '"');
                     } else if (!array_key_exists('old', $values) || !array_key_exists('new', $values)) {
-                        throw new \Exception('[update]: values must have "old" and "new" key. Missing at "' . $entityNamespace . '"');
+                        throw new \UnexpectedValueException('[update]: values must have "old" and "new" key. Missing at "' . $entityNamespace . '"');
                     }
     
                     $searchParam = [];
@@ -148,13 +149,13 @@ class PatchModel
                     }
                     $entities = $this->om->getRepository($entityNamespace)->findBy($searchParam);
                     if (count($entities) < 1) {
-                        throw new \Exception('[update]: entry to update not found in DB for "' . $entityNamespace . '". Probably the patch is broken!');
+                        throw new \UnexpectedValueException('[update]: entry to update not found in DB for "' . $entityNamespace . '". Probably the patch is broken!');
                     }
                     foreach ($entities as $entity) {
                         foreach ($setting['attributes'] as $key => $attribute) {
                             $func = 'set' . ucfirst($attribute);
                             if (!method_exists($entity, $func)) {
-                                throw new \Exception('method "' . $func . '" is not defined on "' . $entityNamespace
+                                throw new \UnexpectedValueException('method "' . $func . '" is not defined on "' . $entityNamespace
                                         . '". Do you not use common setter functions? Use Doctrine to generate your entities!');
                             }
                             $entity->$func($values['new'][$key]);  //use setter for attribute
@@ -170,20 +171,20 @@ class PatchModel
      * Resolve the delete-config and delete as stated
      * Warning: Never delete entries you inserted in the same patch. It won't work!
      * @param array $config
-     * @throws \Exception
+     * @throws \UnexpectedValueException
      */
     protected function delete(array $config) {
         foreach ($config as $entityNamespace => $settings) {
             foreach ($settings as $setting) {
                 if (!array_key_exists('attributes', $setting)) {
-                    throw new \Exception('[delete]: no attributes set for delete Entity "' . $entityNamespace . '"');
+                    throw new \UnexpectedValueException('[delete]: no attributes set for delete Entity "' . $entityNamespace . '"');
                 } else if (!array_key_exists('values', $setting)) {
-                    throw new \Exception('[delete]: no values set for delete Entity "' . $entityNamespace . '"');
+                    throw new \UnexpectedValueException('[delete]: no values set for delete Entity "' . $entityNamespace . '"');
                 }
         
                 foreach ($setting['values'] as $values) {
                     if (count(reset($values)) != count($setting['attributes'])) {
-                        throw new \Exception('[delete]: values param count doesnt match attributes param count at "' . $entityNamespace . '"');
+                        throw new \UnexpectedValueException('[delete]: values param count doesnt match attributes param count at "' . $entityNamespace . '"');
                     }
         
                     $searchParam = [];
@@ -192,7 +193,7 @@ class PatchModel
                     }
                     $entities = $this->om->getRepository($entityNamespace)->findBy($searchParam);
                     if (count($entities) < 1) {
-                        throw new \Exception('[delete]: entry to delete not found in DB for "' . $entityNamespace . '". Probably the patch is broken!');
+                        throw new \UnexpectedValueException('[delete]: entry to delete not found in DB for "' . $entityNamespace . '". Probably the patch is broken!');
                     }
                     foreach ($entities as $entity) {
                         $this->om->remove($entity);
@@ -205,25 +206,25 @@ class PatchModel
     protected function connect(array $config) {
         foreach ($config as $relation) {
             if (!array_key_exists('entities', $relation)) {
-                throw new \Exception('[connect]: no entities set for connect!');
+                throw new \UnexpectedValueException('[connect]: no entities set for connect!');
             }
             $sourceEnties = array_keys($relation['entities']);  //strict mode intermediate-step
             $sourceEntity = reset($sourceEnties);
             $targetEntity = reset($relation['entities']);
             if (!array_key_exists('methods', $relation)) {
-                throw new \Exception('[connect]: no methods set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
+                throw new \UnexpectedValueException('[connect]: no methods set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
             }
             $methods = array_keys($relation['methods']);    //strict mode intermediate-step
             $addMethod = reset($methods);
             if (!array_key_exists('targets', $relation)) {
-                throw new \Exception('[connect]: no targets set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
+                throw new \UnexpectedValueException('[connect]: no targets set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
             }
             foreach ($relation['targets'] as $target) {
                 if (!array_key_exists('source', $target)) {
-                    throw new \Exception('[connect]: no source set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
+                    throw new \UnexpectedValueException('[connect]: no source set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
                 }
                 if (!array_key_exists('target', $target)) {
-                    throw new \Exception('[connect]: no target set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
+                    throw new \UnexpectedValueException('[connect]: no target set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
                 }
                 $entitiesToUpdate = $this->findPersistedEntityBy($sourceEntity, $target['source']);
                 $dbEntities = $this->om->getRepository($sourceEntity)->findBy($target['source']);
@@ -287,12 +288,12 @@ class PatchModel
      * Compares two versions
      * @param array $v1
      * @param array $v2
-     * @throws \Exception If not using Semantic Versioning
+     * @throws \UnexpectedValueException If not using Semantic Versioning
      * @return number -1, 0 or 1
      */
     protected function versionCmp(array $v1, array $v2) {
         if (count($v1) != 3 || count($v2) != 3) {
-            throw new \Exception('You HAVE TO use Semantic Versioning. See http://semver.org/ for more information!');
+            throw new \UnexpectedValueException('You HAVE TO use Semantic Versioning. See http://semver.org/ for more information!');
         }
         $result = 0;
         if ($v1[0] < $v2[0] || $v1[1] < $v2[1] || $v1[2] < $v2[2]) {
