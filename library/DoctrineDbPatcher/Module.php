@@ -26,9 +26,11 @@ class Module
 
     public function getConsoleUsage(AdapterInterface $console){
         return [
-            'dbpatch [Options]' => 'patches the database',
+            'dbpatch [Options] [--down] [<version>]' => 'patches the database',
 
-            ['-v', 'just get version of database']
+            ['-v', 'just get the version of database'],
+            ['--down', 'use only if you want to downpatch'],
+            ['<version>', 'update to this version']
         ];
     }
 }

@@ -4,7 +4,7 @@ namespace DoctrineDbPatcher\Model;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use DoctrineDbPatcher\Entity\DbVersion;
 
-class PatchModel
+class PatchModel extends Downpatch
 {
     protected $om;
     protected $patches;
@@ -34,12 +34,21 @@ class PatchModel
     /**
      * Patches the DB to target version
      * @param string $targetVersion like "1.4.2"
+     * @param string $downpatch make a downpatch
      * @throws \Exception
      * @return boolean true if any patch was applied
      */
-    function patchToVersion($targetVersion = NULL) {
+    function patchToVersion($targetVersion = NULL, $downpatch = false) {
+        if ($downpatch) {
+            return $this->downpatchToVersion($targetVersion);
+        }
         if ($targetVersion != NULL) {
             $targetVersion = explode('.', $targetVersion);
+            if (!array_key_exists(implode('.', $targetVersion), $this->patches)) {  //if patch not exists
+                throw new \Exception('Patch ' . implode('.', $targetVersion) . ' was not found!');
+            } else if ($this->versionCmp($this->version, $targetVersion) == 1) {  //if target version < actual version
+                throw new \Exception('Allready at version ' . $this->getVersion() . ' so updating to ' . implode('.', $targetVersion) . ' is not needed!');
+            }
         }
         $patchedSomething = false;
         foreach ($this->patches as $patchVersion => $patch) {
