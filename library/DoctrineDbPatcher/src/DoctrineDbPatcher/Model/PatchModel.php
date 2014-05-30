@@ -4,12 +4,11 @@ namespace DoctrineDbPatcher\Model;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use DoctrineDbPatcher\Entity\DbVersion;
 
-class PatchModel extends Downpatch
+class PatchModel
 {
     protected $om;
     protected $patches;
     protected $version;
-    protected $dbVersion;
     
     /**
      * Construct and check config
@@ -38,10 +37,7 @@ class PatchModel extends Downpatch
      * @throws \Exception
      * @return boolean true if any patch was applied
      */
-    function patchToVersion($targetVersion = NULL, $downpatch = false) {
-        if ($downpatch) {
-            return $this->downpatchToVersion($targetVersion);
-        }
+    function patchToVersion($targetVersion = NULL) {
         if ($targetVersion != NULL) {
             $targetVersion = explode('.', $targetVersion);
             if (!array_key_exists(implode('.', $targetVersion), $this->patches)) {  //if patch not exists
@@ -286,14 +282,14 @@ class PatchModel extends Downpatch
      */
     protected function checkVersion() {
         $versionRepo = $this->om->getRepository('DoctrineDbPatcher\Entity\DbVersion');
-        $this->dbVersion = $versionRepo->findOneBy([]);
-        if ($this->dbVersion === NULL) {
-            $this->dbVersion = new DbVersion();
-            $this->dbVersion->setVersion('0.0.0');
-            $this->om->persist($this->dbVersion);
+        $dbVersion = $versionRepo->findOneBy([]);
+        if ($dbVersion === NULL) {
+            $dbVersion = new DbVersion();
+            $dbVersion->setVersion('0.0.0');
+            $this->om->persist($dbVersion);
             $this->om->flush();
         }
-        return explode('.', $this->dbVersion->getVersion());
+        return explode('.', $dbVersion->getVersion());
     }
     
     /**
