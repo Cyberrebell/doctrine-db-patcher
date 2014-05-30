@@ -3,6 +3,7 @@ namespace DoctrineDbPatcher\Model;
 
 use Zend\ServiceManager\ServiceLocatorInterface;
 use DoctrineDbPatcher\Entity\DbVersion;
+
 class PatchModel
 {
     protected $om;
@@ -206,12 +207,14 @@ class PatchModel
             if (!array_key_exists('entities', $relation)) {
                 throw new \Exception('[connect]: no entities set for connect!');
             }
-            $sourceEntity = reset(array_keys($relation['entities']));
+            $sourceEnties = array_keys($relation['entities']);  //strict mode intermediate-step
+            $sourceEntity = reset($sourceEnties);
             $targetEntity = reset($relation['entities']);
             if (!array_key_exists('methods', $relation)) {
                 throw new \Exception('[connect]: no methods set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
             }
-            $addMethod = reset(array_keys($relation['methods']));
+            $methods = array_keys($relation['methods']);    //strict mode intermediate-step
+            $addMethod = reset($methods);
             if (!array_key_exists('targets', $relation)) {
                 throw new \Exception('[connect]: no targets set for connect ' . $sourceEntity . ' with ' . $targetEntity . '!');
             }
@@ -275,7 +278,7 @@ class PatchModel
         if ($this->dbVersion === NULL) {
             $this->dbVersion = new DbVersion();
             $this->dbVersion->setVersion('0.0.0');
-//             $this->om->persist($this->dbVersion);
+            $this->om->persist($this->dbVersion);
         }
         return explode('.', $this->dbVersion->getVersion());
     }
