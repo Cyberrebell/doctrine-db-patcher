@@ -62,7 +62,7 @@ class PatchModel
                         }
                     }catch (\UnexpectedValueException $e){
                         throw new \Exception('Patch ' . $patchVersion . ' failed for the following reason: "' . $e->getMessage()
-                            . '"! DB would still at version' . $this->getVersion());
+                            . '"! DB would still at version ' . $this->getVersion());
                     }
                 }
             }
@@ -190,7 +190,7 @@ class PatchModel
                 }
         
                 foreach ($setting['values'] as $values) {
-                    if (count(reset($values)) != count($setting['attributes'])) {
+                    if (count($values) != count($setting['attributes'])) {
                         throw new \UnexpectedValueException('[delete]: values param count doesnt match attributes param count at "' . $entityNamespace . '"');
                     }
         
