@@ -12,7 +12,10 @@ class PatchModelTest extends \PHPUnit_Framework_TestCase
         $serviceLocator = $this->getMock('Zend\ServiceManager\ServiceManager', ['get']);
         $serviceLocator->expects($this->at(0))->method('get')->will($this->returnValue($this->getPatcherConfig()));
         $repo = $this->getMock('Repo', ['findBy', 'findOneBy']);
-        $repo->expects($this->any())->method('findBy')->will($this->returnValue([new DbVersion()]));
+        $dbVersion = new DbVersion();
+        $dbVersion->setVersion('0.0.0');
+        $repo->expects($this->any())->method('findBy')->will($this->returnValue([$dbVersion]));
+        $repo->expects($this->any())->method('findOneBy')->will($this->returnValue($dbVersion));
         $om = $this->getMock('ObjectManager', ['getRepository', 'persist', 'remove', 'flush']);
         $om->expects($this->any())->method('getRepository')->will($this->returnValue($repo));
         $serviceLocator->expects($this->at(1))->method('get')->will($this->returnValue($om));

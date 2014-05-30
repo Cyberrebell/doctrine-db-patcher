@@ -47,6 +47,9 @@ class PatchModel
             if ($this->versionCmp($this->version, $patchVersionArray) == -1) {  //if patch is newer than version
                 if ($targetVersion == NULL || $this->versionCmp($patchVersionArray, $targetVersion) == -1) {
                     try{
+                        $dbVersion = $this->om->getRepository('DoctrineDbPatcher\Entity\DbVersion')->findOneBy([]);
+                        $dbVersion->setVersion($patchVersion);
+                        $this->om->persist($dbVersion);
                         if ($this->applyPatch($patch)) {
                             echo 'Successfull applied patch ' . $this->getVersion() . ' -> ' . $patchVersion . "\n";
                             $this->version = $patchVersionArray;
@@ -83,7 +86,6 @@ class PatchModel
         if (array_key_exists('connect', $patchData)) {
             $this->connect($patchData['connect']);
         }
-        
         $this->om->flush();
         return true;
     }
@@ -280,6 +282,7 @@ class PatchModel
             $this->dbVersion = new DbVersion();
             $this->dbVersion->setVersion('0.0.0');
             $this->om->persist($this->dbVersion);
+            $this->om->flush();
         }
         return explode('.', $this->dbVersion->getVersion());
     }
