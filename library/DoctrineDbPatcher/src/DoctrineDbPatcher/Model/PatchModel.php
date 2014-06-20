@@ -5,8 +5,9 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 
 class PatchModel
 {
-    protected $mappingType; //odm / orm
-    protected $dbVersionNamespace;
+    protected $mappingType; //odm/orm
+    protected $dbVersionNamespace;  //DbVersion namespace depends on odm/orm
+    protected $scheduledInsertionsFunction;  //function name depends on odm/orm
     protected $om;
     protected $patches;
     protected $version;
@@ -19,6 +20,11 @@ class PatchModel
         $config = $service->get('Config');
         $this->mappingType = $config['doctrine']['mapping_type'];
         $this->dbVersionNamespace = 'DoctrineDbPatcher\\' . ucfirst($this->mappingType) . 'Entity\DbVersion';
+        if($this->mappingType == 'odm'){
+            $this->scheduledInsertionsFunction = 'getScheduledDocumentInsertions';
+        }else{
+            $this->scheduledInsertionsFunction = 'getScheduledEntityInsertions';
+        }
         $patcherConfig = $this->getConfigValue('DoctrineDbPatcher', $config);
         $this->om = $service->get($this->getConfigValue('doctrine-objectmanager-service', $patcherConfig));
         $this->patches = $this->getConfigValue('patches', $patcherConfig);
@@ -260,7 +266,8 @@ class PatchModel
      */
     protected function findPersistedEntityBy($entityNamespace, array $criteria) {
         $results = [];
-        $documents = $this->om->getUnitOfWork()->getScheduledDocumentInsertions();
+        $getterFunc = $this->scheduledInsertionsFunction;   //depends on odm/orm
+        $documents = $this->om->getUnitOfWork()->$getterFunc();
         foreach ($documents as $document) {
             if ($document instanceof $entityNamespace) {
                 $accept = true;
@@ -288,7 +295,6 @@ class PatchModel
         $dbVersion = $versionRepo->findOneBy([]);
         if ($dbVersion === NULL) {
             $dbVersion = new $this->dbVersionNamespace();
-            $dbVersion = new DbVersion();
             $dbVersion->setVersion('0.0.0');
             $this->om->persist($dbVersion);
             $this->om->flush();

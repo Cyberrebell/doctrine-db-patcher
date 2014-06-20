@@ -31,7 +31,7 @@ return [
         'driver' => [
             $mappingType . '_default' => [
                 'drivers' => [
-                    'DoctrineDbPatcher\Entity' => $doctrineDbPatcherDriver
+                    'DoctrineDbPatcher\\' . ucfirst($mappingType) . 'Entity' => $doctrineDbPatcherDriver
                 ]
             ],
             'DoctrineDbPatcher_odm_driver' => [
