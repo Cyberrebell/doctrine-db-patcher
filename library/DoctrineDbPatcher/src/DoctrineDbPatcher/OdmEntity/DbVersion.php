@@ -1,5 +1,5 @@
 <?php
-namespace DoctrineDbPatcher\Entity;
+namespace DoctrineDbPatcher\OdmEntity;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 

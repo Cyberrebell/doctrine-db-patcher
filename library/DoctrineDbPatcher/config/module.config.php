@@ -1,4 +1,10 @@
 <?php
+if (class_exists('Doctrine\ODM\MongoDB\Mapping\Driver\AnnotationDriver')) {
+    $doctrineDbPatcherDriver = 'DoctrineDbPatcher_odm_driver';
+} else {
+    $doctrineDbPatcherDriver = 'DoctrineDbPatcher_orm_driver';
+}
+
 return [
     'console' => [
         'router' => [
@@ -24,11 +30,18 @@ return [
         'driver' => [
             'odm_default' => [
                 'drivers' => [
-                    'DoctrineDbPatcher\Entity' => 'DoctrineDbPatcher_driver'
+                    'DoctrineDbPatcher\Entity' => $doctrineDbPatcherDriver
                 ]
             ],
-            'DoctrineDbPatcher_driver' => [
+            'DoctrineDbPatcher_odm_driver' => [
                 'class' => 'Doctrine\ODM\MongoDB\Mapping\Driver\AnnotationDriver',
+                'cache' => 'array',
+                'paths' => [
+                    __DIR__ . '/../src/DoctrineDbPatcher/Entity'
+                ]
+            ],
+            'DoctrineDbPatcher_orm_driver' => [
+                'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
                 'cache' => 'array',
                 'paths' => [
                     __DIR__ . '/../src/DoctrineDbPatcher/Entity'

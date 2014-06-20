@@ -1,7 +1,6 @@
 ##doctrine-db-patcher
 Gives your ZF2+Doctrine-Project a toolset for database-patches.
 
-####Warning: Currently only ODM(MongoDB)-Support. ORM(MySQL) Maybe comming soon...
 
 ===================
 
@@ -13,6 +12,10 @@ php >=5.4
 ZF2: https://github.com/zendframework/zf2
 
 DoctrineMongoODMModule: https://github.com/doctrine/DoctrineMongoODMModule
+
+or
+
+DoctrineORMModule: https://github.com/doctrine/DoctrineORMModule
 
 ####Installation via composer:
 add to composer.json:
@@ -44,7 +47,7 @@ add to any module.config.php:
 ```sh
 return [
     'DoctrineDbPatcher' => [
-        'doctrine-objectmanager-service' => 'Doctrine\ODM\Mongo\DocumentManager',
+        'doctrine-objectmanager-service' => 'Doctrine\ODM\Mongo\DocumentManager', //or Doctrine\ORM\EntityManager
         'patches' => include 'doctrine.patches.php'
     ]
 ];
@@ -112,10 +115,3 @@ run the patch-tool:
 ```sh
 php public/index.php dbpatch
 ```
-
-###Future features:
--downpatching by reading the patches "backwards"
--ORM(MySQL)-Support
-
-###Features that will not be added by me:
--Symphony-Support
