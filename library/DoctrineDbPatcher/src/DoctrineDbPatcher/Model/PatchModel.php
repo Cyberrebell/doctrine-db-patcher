@@ -2,10 +2,11 @@
 namespace DoctrineDbPatcher\Model;
 
 use Zend\ServiceManager\ServiceLocatorInterface;
-use DoctrineDbPatcher\Entity\DbVersion;
 
 class PatchModel
 {
+    protected $mappingType; //odm / orm
+    protected $dbVersionNamespace;
     protected $om;
     protected $patches;
     protected $version;
@@ -16,6 +17,8 @@ class PatchModel
      */
     function __construct(ServiceLocatorInterface $service) {
         $config = $service->get('Config');
+        $this->mappingType = $config['doctrine']['mapping_type'];
+        $this->dbVersionNamespace = 'DoctrineDbPatcher\\' . ucfirst($this->mappingType) . 'Entity\DbVersion';
         $patcherConfig = $this->getConfigValue('DoctrineDbPatcher', $config);
         $this->om = $service->get($this->getConfigValue('doctrine-objectmanager-service', $patcherConfig));
         $this->patches = $this->getConfigValue('patches', $patcherConfig);
@@ -52,7 +55,7 @@ class PatchModel
             if ($this->versionCmp($this->version, $patchVersionArray) == -1) {  //if patch is newer than version
                 if ($targetVersion == NULL || $this->versionCmp($patchVersionArray, $targetVersion) == -1) {
                     try{
-                        $dbVersion = $this->om->getRepository('DoctrineDbPatcher\Entity\DbVersion')->findOneBy([]);
+                        $dbVersion = $this->om->getRepository($this->dbVersionNamespace)->findOneBy([]);
                         $dbVersion->setVersion($patchVersion);
                         $this->om->persist($dbVersion);
                         if ($this->applyPatch($patch)) {
@@ -281,9 +284,10 @@ class PatchModel
      * @return array(3) version
      */
     protected function checkVersion() {
-        $versionRepo = $this->om->getRepository('DoctrineDbPatcher\Entity\DbVersion');
+        $versionRepo = $this->om->getRepository($this->dbVersionNamespace);
         $dbVersion = $versionRepo->findOneBy([]);
         if ($dbVersion === NULL) {
+            $dbVersion = new $this->dbVersionNamespace();
             $dbVersion = new DbVersion();
             $dbVersion->setVersion('0.0.0');
             $this->om->persist($dbVersion);

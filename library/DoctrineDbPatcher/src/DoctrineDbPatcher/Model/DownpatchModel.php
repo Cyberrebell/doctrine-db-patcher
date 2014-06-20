@@ -33,7 +33,7 @@ class DownpatchModel extends PatchModel
                     try{
                         $newVersion = key($this->patches);
                         
-                        $dbVersion = $this->om->getRepository('DoctrineDbPatcher\Entity\DbVersion')->findOneBy([]);
+                        $dbVersion = $this->om->getRepository($this->dbVersionNamespace)->findOneBy([]);
                         $dbVersion->setVersion($newVersion);
                         $this->om->persist($dbVersion);
                         

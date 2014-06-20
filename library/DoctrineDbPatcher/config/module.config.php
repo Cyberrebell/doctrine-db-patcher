@@ -1,9 +1,10 @@
 <?php
 if (class_exists('Doctrine\ODM\MongoDB\Mapping\Driver\AnnotationDriver')) {
-    $doctrineDbPatcherDriver = 'DoctrineDbPatcher_odm_driver';
+    $mappingType = 'odm';
 } else {
-    $doctrineDbPatcherDriver = 'DoctrineDbPatcher_orm_driver';
+    $mappingType = 'orm';
 }
+$doctrineDbPatcherDriver = 'DoctrineDbPatcher_' . $mappingType . '_driver';
 
 return [
     'console' => [
@@ -28,7 +29,7 @@ return [
     ],
     'doctrine' => [
         'driver' => [
-            'odm_default' => [
+            $mappingType . '_default' => [
                 'drivers' => [
                     'DoctrineDbPatcher\Entity' => $doctrineDbPatcherDriver
                 ]
@@ -37,16 +38,17 @@ return [
                 'class' => 'Doctrine\ODM\MongoDB\Mapping\Driver\AnnotationDriver',
                 'cache' => 'array',
                 'paths' => [
-                    __DIR__ . '/../src/DoctrineDbPatcher/Entity'
+                    __DIR__ . '/../src/DoctrineDbPatcher/OdmEntity'
                 ]
             ],
             'DoctrineDbPatcher_orm_driver' => [
                 'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
                 'cache' => 'array',
                 'paths' => [
-                    __DIR__ . '/../src/DoctrineDbPatcher/Entity'
+                    __DIR__ . '/../src/DoctrineDbPatcher/OrmEntity'
                 ]
             ]
-        ]
+        ],
+        'mapping_type' => $mappingType
     ]
 ];
